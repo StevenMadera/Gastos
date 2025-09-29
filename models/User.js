@@ -1,0 +1,12 @@
+import mongoose from 'mongoose';
+
+const userSchema = new mongoose.Schema({
+  email: { type: String, required: true, unique: true },
+  password: { type: String, required: true },
+  name: { type: String },
+  resetToken: { type: String },
+  resetTokenExpire: { type: Date },
+  // Puedes agregar más campos según tu app
+});
+
+export default mongoose.model('User', userSchema);
