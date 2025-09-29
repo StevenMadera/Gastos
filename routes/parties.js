@@ -43,13 +43,24 @@ router.get('/:id', authenticateToken, async (req, res) => {
 // Actualizar party (solo si pertenece al usuario)
 router.put('/:id', authenticateToken, async (req, res) => {
   try {
-    const party = await Party.findOneAndUpdate(
-      { _id: req.params.id, user: req.user.id },
-      req.body,
-      { new: true }
-    );
-    if (party) res.json(party);
-    else res.status(404).json({ error: 'Party no encontrada' });
+    // Custom logic for ticket operations
+    const { type, ticketCost } = req.body;
+    let party = await Party.findOne({ _id: req.params.id, user: req.user.id });
+    if (!party) {
+      return res.status(404).json({ error: 'Party no encontrada' });
+    }
+
+    if (type === 'add' && ticketCost) {
+      party.revenue += ticketCost;
+    } else if (type === 'refund' && ticketCost) {
+      party.revenue -= ticketCost;
+      if (party.revenue < 0) party.revenue = 0;
+    } else {
+      // Fallback to generic update if not a ticket operation
+      Object.assign(party, req.body);
+    }
+    await party.save();
+    res.json(party);
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
